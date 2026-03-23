@@ -28,7 +28,7 @@ interface PopularQuestionsSheetProps {
 }
 
 function QuestionCard({ question, onSelect }: { question: PopularQuestion; onSelect: (q: PopularQuestion) => void }) {
-  const { icon: Icon, badge } = TYPE_CONFIG[question.type];
+  const { icon: Icon } = TYPE_CONFIG[question.type];
 
   let preview = "";
   if (question.type === "balance") {

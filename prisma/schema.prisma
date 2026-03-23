@@ -11,6 +11,7 @@ model Room {
   id        String   @id @default(cuid())
   title     String
   createdAt DateTime @default(now())
+  expiresAt DateTime
 
   questions Question[]
   participants Participant[]

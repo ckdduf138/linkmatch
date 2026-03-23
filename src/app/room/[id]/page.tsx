@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Check,
   Copy,
+  Share2,
   Loader2,
   Scale,
   ListChecks,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
 import { cn } from "@/lib/utils";
 import { AntlerLogo } from "@/components/landing/AntlerLogo";
 
@@ -34,6 +36,7 @@ interface Question {
 interface Room {
   id: string;
   title: string;
+  expiresAt: string;
   questions: Question[];
   participants: { id: string; nickname: string }[];
 }
@@ -57,6 +60,14 @@ function Lobby({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const shareLink = async () => {
+    if (navigator.share) {
+      await navigator.share({ title: room.title, url });
+    } else {
+      copyLink();
+    }
+  };
+
   const handleStart = () => {
     if (nickname.trim()) onStart(nickname.trim());
   };
@@ -71,7 +82,7 @@ function Lobby({
         <h1 className="text-2xl font-bold text-stone-900 mb-2 leading-snug">
           {room.title}
         </h1>
-        <div className="flex items-center gap-3 text-xs text-stone-600 color-stone-600">
+        <div className="flex items-center gap-3 text-xs text-stone-600">
           <span className="flex items-center gap-1">
             <ListChecks className="w-3 h-3" />
             {room.questions.length}개 질문
@@ -84,16 +95,38 @@ function Lobby({
         </div>
       </div>
 
-      {/* Copy link */}
+      {/* Share card */}
       <div className="mb-6 rounded-2xl border border-amber-100 bg-white overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-stone-200">
+        <div className="px-5 py-3 border-b border-stone-100">
           <span className="text-[10px] uppercase tracking-widest text-stone-500">
             초대 링크
           </span>
+        </div>
+        {/* QR code */}
+        <div className="flex justify-center py-5 border-b border-stone-100">
+          <QRCodeSVG
+            value={url}
+            size={128}
+            fgColor="#1c1917"
+            bgColor="transparent"
+            imageSettings={{
+              src: "/icon.svg",
+              width: 24,
+              height: 24,
+              excavate: true,
+            }}
+          />
+        </div>
+        {/* URL */}
+        <div className="px-5 py-3 border-b border-stone-100">
+          <p className="text-xs text-stone-500 truncate">{url}</p>
+        </div>
+        {/* Buttons */}
+        <div className="flex">
           <button
             onClick={copyLink}
             className={cn(
-              "flex items-center gap-1.5 text-xs transition-colors",
+              "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs border-r border-stone-100 transition-colors",
               copied ? "text-amber-600" : "text-stone-600 hover:text-stone-900"
             )}
           >
@@ -109,9 +142,13 @@ function Lobby({
               </>
             )}
           </button>
-        </div>
-        <div className="px-5 py-3">
-          <p className="text-xs text-stone-500 truncate">{url}</p>
+          <button
+            onClick={shareLink}
+            className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-stone-600 hover:text-stone-900 transition-colors"
+          >
+            <Share2 className="w-3 h-3" />
+            공유하기
+          </button>
         </div>
       </div>
 
@@ -134,7 +171,6 @@ function Lobby({
         </div>
       )}
 
-      {/* Empty state - no participants */}
       {room.participants.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8 mb-6">
           <AntlerLogo className="w-8 h-10 text-stone-300 mb-4" />
@@ -176,7 +212,6 @@ function Lobby({
         </button>
       </div>
 
-      {/* View results */}
       {room.participants.length > 0 && (
         <div className="text-center mt-8">
           <Link
@@ -273,7 +308,6 @@ function AnswerMode({
             transition={{ duration: 0.3 }}
           />
         </div>
-        {/* Dot indicators */}
         <div className="flex items-center gap-1.5 mt-3">
           {room.questions.map((q, i) => (
             <button
@@ -306,7 +340,6 @@ function AnswerMode({
           exit={{ opacity: 0, x: direction * -24 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
         >
-          {/* Question */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <IconComponent className="w-3.5 h-3.5 text-stone-500" />
@@ -319,7 +352,6 @@ function AnswerMode({
             </h2>
           </div>
 
-          {/* Balance game */}
           {question?.type === "balance" && (
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -357,7 +389,6 @@ function AnswerMode({
             </div>
           )}
 
-          {/* Multiple choice */}
           {question?.type === "multiple" && (
             <div className="space-y-2">
               {parsedOptions.map((opt, i) => {
@@ -388,7 +419,6 @@ function AnswerMode({
             </div>
           )}
 
-          {/* Subjective */}
           {question?.type === "subjective" && (
             <textarea
               value={currentAnswer ?? ""}
@@ -452,6 +482,26 @@ function AnswerMode({
   );
 }
 
+/* ─── Expired ────────────────────────────── */
+
+function Expired() {
+  return (
+    <div className="min-h-screen bg-[#fafaf8] flex flex-col items-center justify-center gap-6 px-4">
+      <AntlerLogo className="w-10 h-12 text-stone-300" />
+      <div className="text-center">
+        <h1 className="text-xl font-bold text-stone-800 mb-2">방이 만료됐어요</h1>
+        <p className="text-sm text-stone-500">24시간이 지나 더 이상 접근할 수 없어요</p>
+      </div>
+      <Link
+        href="/create"
+        className="px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium transition-colors"
+      >
+        새 방 만들기
+      </Link>
+    </div>
+  );
+}
+
 /* ─── Page ───────────────────────────────── */
 
 export default function RoomPage({
@@ -463,17 +513,22 @@ export default function RoomPage({
   const router = useRouter();
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expired, setExpired] = useState(false);
   const [mode, setMode] = useState<"lobby" | "answer">("lobby");
   const [nickname, setNickname] = useState("");
 
   useEffect(() => {
     fetch(`/api/rooms/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
+      .then(async (r) => {
+        if (r.status === 410) {
+          setExpired(true);
+          return;
+        }
+        const data = await r.json();
         setRoom(data);
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [id]);
 
   const handleStart = (name: string) => {
@@ -508,6 +563,8 @@ export default function RoomPage({
     );
   }
 
+  if (expired) return <Expired />;
+
   if (!room) {
     return (
       <div className="min-h-screen bg-[#fafaf8] flex flex-col items-center justify-center gap-4">
@@ -525,7 +582,6 @@ export default function RoomPage({
 
   return (
     <div className="min-h-screen bg-[#fafaf8] text-stone-900">
-      {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-8 py-4 border-b border-amber-100 bg-white/90 backdrop-blur-md">
         <Link
           href="/"

@@ -22,5 +22,9 @@ export async function GET(
     return NextResponse.json({ error: "방을 찾을 수 없습니다" }, { status: 404 });
   }
 
+  if (new Date(room.expiresAt) < new Date()) {
+    return NextResponse.json({ error: "expired" }, { status: 410 });
+  }
+
   return NextResponse.json(room);
 }

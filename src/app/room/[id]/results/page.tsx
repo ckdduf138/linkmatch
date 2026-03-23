@@ -322,16 +322,18 @@ export default function ResultsPage({
   const { id } = use(params);
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expired, setExpired] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetch(`/api/rooms/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
+      .then(async (r) => {
+        if (r.status === 410) { setExpired(true); return; }
+        const data = await r.json();
         setRoom(data);
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [id]);
 
   const copyInviteLink = async () => {
@@ -345,6 +347,24 @@ export default function ResultsPage({
     return (
       <div className="min-h-screen bg-[#fafaf8] flex items-center justify-center">
         <Loader2 className="w-5 h-5 text-stone-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (expired) {
+    return (
+      <div className="min-h-screen bg-[#fafaf8] flex flex-col items-center justify-center gap-6 px-4">
+        <AntlerLogo className="w-10 h-12 text-stone-300" />
+        <div className="text-center">
+          <h1 className="text-xl font-bold text-stone-800 mb-2">방이 만료됐어요</h1>
+          <p className="text-sm text-stone-500">24시간이 지나 더 이상 접근할 수 없어요</p>
+        </div>
+        <Link
+          href="/create"
+          className="px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium transition-colors"
+        >
+          새 방 만들기
+        </Link>
       </div>
     );
   }
