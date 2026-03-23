@@ -1,97 +1,46 @@
 # Deerlink
 
-링크 하나로 그룹 전체의 생각을 비교하는 플랫폼.
+> 링크 하나로, 우리 생각이 얼마나 다른지 알아봐요.
 
-방 생성자가 질문을 만들고 링크를 공유하면, 참여자 전원이 같은 질문에 답한 뒤 결과를 한꺼번에 비교합니다.
+친구들과 밸런스 게임을 하거나, 모임 전에 의견을 모으거나, 팀 내 가치관을 비교할 때 — 카카오톡 단톡방에서 "나만 답하는" 문제를 해결하려고 만들었어요.
 
-## 핵심 기능
+링크 하나를 공유하면 모두가 같은 질문에 답하고, 마지막 사람이 제출하는 순간 모두의 선택이 동시에 공개됩니다.
 
-- **밸런스 게임** — A vs B, 둘 중 하나를 선택
-- **객관식** — 여러 선택지 중 하나
-- **주관식** — 자유 텍스트 응답
-- **Answer Lock** — 모두가 답변을 완료하기 전까지 다른 참여자의 선택 비공개 (API 레벨 강제)
+---
 
-## 기술 스택
+## 왜 만들었냐면
 
-| 레이어 | 기술 |
+단톡방에서 "강아지 vs 고양이 투표해요" 하면, 항상 먼저 답한 사람의 선택이 보여서 나머지 사람들이 눈치를 봐요. 또는 몇 명은 아예 참여를 안 하거나.
+
+Deerlink는 **Answer Lock** 방식을 씁니다. 모두가 답변을 완료하기 전까지는 누구의 선택도 보이지 않아요. 마지막 사람이 제출하는 순간, 한꺼번에 결과가 열립니다.
+
+---
+
+## 어떻게 쓰냐면
+
+1. **방을 만든다** — 질문을 1~10개 만들고 (밸런스 게임 / 객관식 / 주관식)
+2. **링크를 공유한다** — 카카오톡, 인스타, 어디든
+3. **모두가 답한다** — 닉네임만 입력하면 바로 참여 가능, 가입 불필요
+4. **한꺼번에 비교한다** — 모두가 답변 완료한 순간 결과 공개
+
+---
+
+## 주요 기능
+
+| 기능 | 설명 |
 |---|---|
-| Framework | Next.js 16 (App Router, Turbopack) |
-| Language | TypeScript 5 (strict) |
-| Styling | Tailwind CSS v4 |
-| Animation | Framer Motion |
-| Icons | lucide-react |
-| ORM | Prisma 7 |
-| DB | SQLite → Turso (libSQL) |
+| 밸런스 게임 | A vs B 양자택일. 결과에서 파이 차트로 비교 |
+| 객관식 | 최대 6개 선택지. 가장 많이 고른 선택지 강조 |
+| 주관식 | 자유 텍스트. 모두의 답변을 카드 형태로 나열 |
+| Answer Lock | 전원 제출 전까지 결과 비공개 (API 레벨 강제) |
+| 인기 질문 | 바로 쓸 수 있는 큐레이션 질문 20개 제공 |
+| 링크 공유 | 방 URL 하나로 로그인 없이 참여 |
 
-## 로컬 실행
+---
 
-```bash
-# 의존성 설치
-pnpm install
+## 만든 사람
 
-# DB 초기화
-npx prisma migrate dev --name init
+개인 프로젝트로 혼자 기획, 디자인, 개발했습니다.
 
-# 개발 서버 실행
-pnpm dev
-```
-
-[http://localhost:3000](http://localhost:3000) 에서 확인
-
-## 배포 (Vercel + Turso)
-
-### 1. Turso DB 세팅
-
-```bash
-# Turso CLI 설치
-curl -sSfL https://get.tur.so/install.sh | bash
-
-# 로그인 및 DB 생성
-turso auth login
-turso db create deerlink
-
-# 환경변수 확인
-turso db show deerlink --url
-turso db tokens create deerlink
-```
-
-### 2. Prisma 설정 변경
-
-`prisma/schema.prisma`에서 datasource를 libsql로 변경:
-
-```prisma
-datasource db {
-  provider = "libsql"
-  url      = env("TURSO_DATABASE_URL")
-  authToken = env("TURSO_AUTH_TOKEN")
-}
-```
-
-### 3. Vercel 배포
-
-1. GitHub에 push
-2. [Vercel](https://vercel.com)에서 프로젝트 import
-3. 환경변수 설정 (아래 참고)
-4. Deploy
-
-## 환경변수
-
-```env
-# Turso (프로덕션)
-TURSO_DATABASE_URL=libsql://[db-name]-[org].turso.io
-TURSO_AUTH_TOKEN=your-token-here
-
-# 앱 URL (OG 이미지, sitemap)
-NEXT_PUBLIC_APP_URL=https://yourdomain.com
-```
-
-## DB 스키마
-
-```
-Room         id(cuid), title, createdAt
-Question     id, roomId, type, title, optionA?, optionB?, options?(JSON), order
-Participant  id, roomId, nickname, createdAt
-Answer       id, questionId, participantId, value
-```
-
-- `Answer.value`: balance → `"A"` | `"B"`, multiple → 인덱스 문자열, subjective → 자유 텍스트
+- **GitHub**: [github.com/lcyyyyyyyy/deerlink](https://github.com/lcyyyyyyyy)
+- **서비스**: [deerlink.kr](https://deerlink.kr)

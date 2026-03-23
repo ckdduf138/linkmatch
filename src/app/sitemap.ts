@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://deerlink.app";
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://deerlink.kr";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://deerlink.app";
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://deerlink.kr";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -18,7 +18,11 @@ export const metadata: Metadata = {
     "링크 공유",
     "친구 비교",
     "가치관 비교",
+    "투표",
+    "설문조사",
+    "Answer Lock",
     "Deerlink",
+    "디어링크",
   ],
   openGraph: {
     title: "우리 생각 얼마나 다를까? | Deerlink",
@@ -42,6 +46,23 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Deerlink",
+  url: baseUrl,
+  description:
+    "링크 하나로 그룹 전체가 같은 질문에 답하고 서로의 선택을 한꺼번에 비교하는 서비스. 밸런스게임, 객관식, 주관식 질문 지원.",
+  applicationCategory: "SocialNetworkingApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "KRW",
+  },
+  inLanguage: "ko-KR",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -55,6 +76,10 @@ export default function RootLayout({
           as="style"
           crossOrigin="anonymous"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="antialiased">{children}</body>

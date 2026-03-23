@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Deerlink — 링크 하나로 모두의 생각을 비교해요";
+export const alt = "Deerlink — 우리 생각이 얼마나 다른지 알아봐요";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
