@@ -12,10 +12,13 @@ import {
   PenLine,
   GripVertical,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { AntlerLogo } from "@/components/landing/AntlerLogo";
+import { PopularQuestionsSheet } from "@/components/PopularQuestionsSheet";
+import type { PopularQuestion } from "@/data/popular-questions";
 
 /* ─── Types ─────────────────────────────────────── */
 
@@ -218,6 +221,7 @@ export default function CreateRoomPage() {
   const [title, setTitle] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showSheet, setShowSheet] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -249,6 +253,19 @@ export default function CreateRoomPage() {
       ) as HTMLInputElement;
       lastInput?.focus();
     }, 0);
+  };
+
+  const addFromPopular = (pq: PopularQuestion) => {
+    if (atMax) return;
+    const q: Question = {
+      id: generateId(),
+      type: pq.type,
+      title: pq.title,
+      ...(pq.type === "balance" ? { optionA: pq.optionA ?? "", optionB: pq.optionB ?? "" } : {}),
+      ...(pq.type === "multiple" ? { options: pq.options ?? ["", ""] } : {}),
+    };
+    setQuestions((prev) => [...prev, q]);
+    setShowSheet(false);
   };
 
   const updateQuestion = (id: string, updates: Partial<Question>) => {
@@ -300,7 +317,7 @@ export default function CreateRoomPage() {
           className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline flex items-center gap-1.5 text-sm font-semibold text-stone-900 tracking-tight">
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-stone-900 tracking-tight">
             <AntlerLogo className="w-3 h-[15px] text-amber-400" />
             Deerlink
           </span>
@@ -392,6 +409,22 @@ export default function CreateRoomPage() {
             )}
           </AnimatePresence>
 
+          {/* Popular questions button */}
+          <AnimatePresence>
+            {!atMax && title.trim().length > 0 && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowSheet(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs text-stone-500 hover:text-amber-600 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                인기 질문에서 가져오기
+              </motion.button>
+            )}
+          </AnimatePresence>
+
           {title.trim().length > 0 && questions.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -443,7 +476,14 @@ export default function CreateRoomPage() {
             </p>
           )}
         </div>
-      </div>
+
+        </div>
+
+      <PopularQuestionsSheet
+        open={showSheet}
+        onClose={() => setShowSheet(false)}
+        onSelect={addFromPopular}
+      />
     </div>
   );
 }
