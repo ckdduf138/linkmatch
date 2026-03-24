@@ -4,6 +4,18 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* iOS Safari 포커스 확대 방지 — font-size >= 16px 강제 */
+/* @layer 밖 선언 → Tailwind 유틸리티(text-sm 등)보다 cascade 우선순위 높음 */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea {
+  font-size: 1rem;
+}
+
+/* iPhone 홈바 safe area 확보 */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 2rem);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

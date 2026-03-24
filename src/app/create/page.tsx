@@ -450,7 +450,7 @@ export default function CreateRoomPage() {
 
       {/* Mobile sticky bar */}
       <div className="fixed bottom-0 inset-x-0 md:hidden z-40">
-        <div className="bg-gradient-to-t from-[#fafaf8] via-[#fafaf8]/95 to-transparent pt-8 pb-8 px-4">
+        <div className="bg-gradient-to-t from-[#fafaf8] via-[#fafaf8]/95 to-transparent pt-8 px-4 pb-safe">
           <button
             onClick={handleSubmit}
             disabled={!isValid || loading}

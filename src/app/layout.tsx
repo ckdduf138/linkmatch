@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Gowun_Dodum } from "next/font/google";
 import "./globals.css";
 
@@ -10,6 +10,12 @@ const gowunDodum = Gowun_Dodum({
 });
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://deerlink.kr";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
