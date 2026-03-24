@@ -40,10 +40,7 @@ export async function POST(
       })),
     });
 
-    return tx.participant.findUnique({
-      where: { id: p.id },
-      include: { answers: true },
-    });
+    return p;
   });
 
   return NextResponse.json(participant);

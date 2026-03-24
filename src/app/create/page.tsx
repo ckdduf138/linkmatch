@@ -349,7 +349,7 @@ export default function CreateRoomPage() {
       <div className="max-w-xl mx-auto px-4 pt-24 pb-40 md:pb-20">
         {/* Header */}
         <div className="mb-8">
-          <p className="text-xs text-stone-600 mb-1">질문 만들고 링크 공유하면 끝</p>
+          <p className="text-xs text-stone-600 mb-1">질문 만들고 공유해요</p>
           <input
             ref={titleInputRef}
             type="text"

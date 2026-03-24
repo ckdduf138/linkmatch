@@ -6,10 +6,10 @@ import { ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const participants = [
-  { name: "나", answer: "강아지", color: "violet" as const, delay: 0.6 },
-  { name: "민지", answer: "고양이", color: "sky" as const, delay: 0.75 },
-  { name: "준혁", answer: "강아지", color: "violet" as const, delay: 0.9 },
-  { name: "수아", answer: "강아지", color: "violet" as const, delay: 1.05 },
+  { name: "나", answer: "칼퇴", color: "violet" as const, delay: 0.6 },
+  { name: "민지", answer: "야근", color: "sky" as const, delay: 0.75 },
+  { name: "준혁", answer: "칼퇴", color: "violet" as const, delay: 0.9 },
+  { name: "수아", answer: "칼퇴", color: "violet" as const, delay: 1.05 },
 ];
 
 const colorMap = {
@@ -66,8 +66,8 @@ function AntlerBackground() {
 }
 
 function ProductMockup() {
-  const dogCount = participants.filter((p) => p.answer === "강아지").length;
-  const catCount = participants.filter((p) => p.answer === "고양이").length;
+  const dogCount = participants.filter((p) => p.answer === "칼퇴").length;
+  const catCount = participants.filter((p) => p.answer === "야근").length;
   const total = participants.length;
 
   return (
@@ -98,17 +98,17 @@ function ProductMockup() {
             Q1 · 밸런스 게임
           </div>
           <div className="text-sm font-semibold text-stone-900 leading-snug mb-4">
-            강아지 vs 고양이, 뭘 좋아해?
+            월 500 야근 vs 월 300 칼퇴?
           </div>
 
           {/* Option buttons */}
           <div className="grid grid-cols-2 gap-2 mb-5">
             <div className="py-3 px-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between">
-              <span className="text-xs font-medium text-amber-700">강아지</span>
+              <span className="text-xs font-medium text-amber-700">칼퇴</span>
               <Check className="w-3 h-3 text-amber-500" />
             </div>
             <div className="py-3 px-3 rounded-xl bg-stone-100 border border-stone-200 flex items-center">
-              <span className="text-xs font-medium text-stone-500">고양이</span>
+              <span className="text-xs font-medium text-stone-500">야근</span>
             </div>
           </div>
         </div>
@@ -175,10 +175,10 @@ function ProductMockup() {
             </motion.div>
             <div className="flex justify-between">
               <span className="text-[10px] text-stone-400">
-                강아지 {dogCount}명
+                칼퇴 {dogCount}명
               </span>
               <span className="text-[10px] text-stone-400">
-                고양이 {catCount}명
+                야근 {catCount}명
               </span>
             </div>
           </div>

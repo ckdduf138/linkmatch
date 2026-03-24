@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
+import { Gowun_Dodum } from "next/font/google";
 import "./globals.css";
+
+const gowunDodum = Gowun_Dodum({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-gowun-dodum",
+});
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://deerlink.kr";
 
@@ -72,14 +80,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" className={gowunDodum.variable}>
       <head>
-        <link
-          rel="stylesheet"
-          as="style"
-          crossOrigin="anonymous"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-        />
         <meta name="naver-site-verification" content="e27d20053691ae1e1d1d23a7a14da0d60cccf90d" />
         <script
           type="application/ld+json"

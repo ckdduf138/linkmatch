@@ -3,9 +3,13 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { AntlerLogo } from "./AntlerLogo";
+import { FeedbackModal } from "@/components/FeedbackModal";
 
 export function CtaSection() {
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
   return (
     <section className="py-28 md:py-40 px-6 bg-amber-50">
       <div className="max-w-2xl mx-auto text-center">
@@ -41,9 +45,22 @@ export function CtaSection() {
         </motion.div>
 
         <div className="mt-24 pt-8 border-t border-amber-100">
-          <p className="text-xs text-stone-500">&copy; 2026 Deerlink</p>
+          <div className="flex items-center justify-center gap-3">
+            <p className="text-xs text-stone-500">&copy; 2026 Deerlink</p>
+            <span className="text-stone-300 text-xs">·</span>
+            <span className="text-xs text-stone-400">v0.1.0</span>
+            <span className="text-stone-300 text-xs">·</span>
+            <button
+              onClick={() => setFeedbackOpen(true)}
+              className="text-xs text-stone-400 hover:text-stone-600 transition-colors"
+            >
+              피드백
+            </button>
+          </div>
         </div>
       </div>
+
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </section>
   );
 }

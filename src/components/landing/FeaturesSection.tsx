@@ -8,31 +8,28 @@ import { cn } from "@/lib/utils";
 function BalanceGamePreview() {
   return (
     <div className="mt-auto pt-6 select-none">
-      <div className="text-[10px] text-stone-400 uppercase tracking-widest mb-3">
-        Q. 밤샘 vs 푹 쉬기
-      </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="py-3 px-4 rounded-xl border border-amber-200 bg-amber-50 text-center">
-          <span className="text-xs font-semibold text-amber-700">밤샘</span>
+          <span className="text-xs font-semibold text-amber-700">비혼</span>
         </div>
         <div className="py-3 px-4 rounded-xl border border-stone-200 bg-stone-100 text-center">
-          <span className="text-xs font-medium text-stone-600">푹 쉬기</span>
+          <span className="text-xs font-medium text-stone-600">결혼</span>
         </div>
       </div>
       <div className="mt-3 h-0.5 rounded-full bg-stone-200 overflow-hidden">
         <div className="h-full w-3/4 bg-gradient-to-r from-amber-600 to-amber-400 rounded-full" />
       </div>
       <div className="mt-1.5 flex justify-between text-[10px] text-stone-500">
-        <span>밤샘 3명</span>
-        <span>푹 쉬기 1명</span>
+        <span>비혼 3명</span>
+        <span>결혼 1명</span>
       </div>
     </div>
   );
 }
 
 function MultipleChoicePreview() {
-  const options = ["이번 계절이 최고", "괜찮은 편", "별로", "최악"];
-  const selected = 1;
+  const options = ["멀쩡함", "슬슬 오는 중", "이미 왔음", "탈출하고 싶음"];
+  const selected = 2;
   return (
     <div className="mt-auto pt-6 select-none space-y-1.5">
       {options.map((opt, i) => (
@@ -68,7 +65,7 @@ function OpenTextPreview() {
       </div>
       <div className="rounded-xl border border-stone-200 bg-stone-100 p-3">
         <p className="text-xs text-stone-600 leading-relaxed">
-          개인적으로는 야근하면서 번아웃 오는 게...
+          솔직히 AI 때문에 내 직업 없어질까봐...
         </p>
         <div className="mt-2 flex items-center gap-1">
           <div className="w-0.5 h-3.5 bg-amber-400 rounded-full animate-pulse" />
@@ -80,10 +77,10 @@ function OpenTextPreview() {
 
 function ResultsPreview() {
   const answers = [
-    { name: "나", label: "완전 동의", pct: 75, color: "amber" },
-    { name: "민지", label: "별로", pct: 25, color: "teal" },
-    { name: "준혁", label: "완전 동의", pct: 75, color: "amber" },
-    { name: "수아", label: "완전 동의", pct: 75, color: "amber" },
+    { name: "나", label: "재택", pct: 75, color: "amber" },
+    { name: "민지", label: "출근", pct: 25, color: "teal" },
+    { name: "준혁", label: "재택", pct: 75, color: "amber" },
+    { name: "수아", label: "재택", pct: 75, color: "amber" },
   ];
 
   return (
@@ -170,9 +167,11 @@ function BentoCard({
         className
       )}
     >
-      <div className="text-[10px] text-stone-400 uppercase tracking-widest mb-3">
-        {eyebrow}
-      </div>
+      {eyebrow && (
+        <div className="text-[10px] text-stone-400 uppercase tracking-widest mb-3">
+          {eyebrow}
+        </div>
+      )}
       <h3 className="text-sm font-semibold text-stone-900 mb-1">{title}</h3>
       <p className="text-xs text-stone-500 leading-relaxed">{description}</p>
       {children}
@@ -216,7 +215,7 @@ export function FeaturesSection() {
 
           {/* Balance game */}
           <BentoCard
-            eyebrow="질문 유형 01"
+            eyebrow=""
             title="밸런스 게임"
             description="A vs B, 하나를 선택하세요"
             delay={0.08}
@@ -226,9 +225,9 @@ export function FeaturesSection() {
 
           {/* Multiple choice */}
           <BentoCard
-            eyebrow="질문 유형 02"
+            eyebrow=""
             title="객관식"
-            description="여러 선택지 중 하나"
+            description="내 삶의 번아웃 수준은?"
             delay={0.16}
           >
             <MultipleChoicePreview />
@@ -236,49 +235,14 @@ export function FeaturesSection() {
 
           {/* Open text */}
           <BentoCard
-            eyebrow="질문 유형 03"
+            eyebrow=""
             title="주관식"
-            description="자유롭게 생각을 표현하세요"
+            description="요즘 뭐가 제일 걱정돼?"
             delay={0.24}
           >
             <OpenTextPreview />
           </BentoCard>
 
-          {/* Answer lock — stat card */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.5, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
-            className="md:col-span-3 rounded-2xl border border-amber-100 bg-white p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6 shadow-sm"
-          >
-            <div className="flex-1">
-              <div className="text-[10px] text-stone-400 uppercase tracking-widest mb-3">
-                Answer Lock
-              </div>
-              <h3 className="text-base font-semibold text-stone-900 mb-1">
-                결과는 모두가 답변한 후에만 공개
-              </h3>
-              <p className="text-sm text-stone-500 leading-relaxed max-w-lg">
-                참여자는 자신의 답변을 제출하기 전까지 다른 사람의 선택을 볼 수 없습니다.
-                편향 없이 솔직한 답변을 받을 수 있어요.
-              </p>
-            </div>
-            <div className="flex gap-8 md:gap-12 flex-shrink-0">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-stone-900 mb-0.5">100%</div>
-                <div className="text-xs text-stone-500">솔직한 답변</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-stone-900 mb-0.5">0</div>
-                <div className="text-xs text-stone-500">선행 편향</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-stone-900 mb-0.5">즉시</div>
-                <div className="text-xs text-stone-500">결과 공개</div>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </div>
     </section>
