@@ -1,15 +1,11 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Deerlink — 우리 생각이 얼마나 다른지 알아봐요";
+export const alt = "Deerlink — 링크 하나로 모두의 생각을 비교해요";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function Image() {
-  const fontData = await fetch(
-    "https://fonts.gstatic.com/s/notosanskr/v36/PbykFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzuoyeLTq8H4hfeE.woff2"
-  ).then((res) => res.arrayBuffer());
-
+export default function Image() {
   return new ImageResponse(
     (
       <div
@@ -21,7 +17,7 @@ export default async function Image() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "NotoSansKR, sans-serif",
+          fontFamily: "sans-serif",
         }}
       >
         <svg
@@ -55,14 +51,13 @@ export default async function Image() {
         </div>
         <div
           style={{
-            fontSize: 30,
-            color: "#78716c",
+            fontSize: 28,
+            color: "#a8a29e",
             marginTop: 18,
             letterSpacing: "-0.5px",
-            fontFamily: "NotoSansKR, sans-serif",
           }}
         >
-          링크 하나로 모두의 생각을 비교해요
+          Group Opinion Comparison
         </div>
         <div
           style={{
@@ -75,9 +70,6 @@ export default async function Image() {
         />
       </div>
     ),
-    {
-      ...size,
-      fonts: [{ name: "NotoSansKR", data: fontData, weight: 700 }],
-    }
+    { ...size }
   );
 }
