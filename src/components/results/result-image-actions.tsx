@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Download, Image as ImageIcon, Loader2, RefreshCw, Share2 } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, RefreshCw, Share2, Sparkles } from "lucide-react";
 import type { ResultsRoom } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -18,14 +18,24 @@ function isShareCanceled(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
+/**
+ * 결과 이미지는 사용자가 누를 때 만든다.
+ *
+ * 예전엔 마운트 즉시 fetch 해서, 결과 페이지에 들어오기만 해도 서버가 1080x1080
+ * ImageResponse를 매번 구웠다 (라우트가 force-dynamic + no-store다). 공유 버튼을
+ * 누르지도 않은 사람 몫까지 굽고 있었다는 뜻이다.
+ */
 export function ResultImageActions({ room }: { room: ResultsRoom }) {
   const [attempt, setAttempt] = useState(0);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [prepared, setPrepared] = useState<PreparedImage | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // attempt 0은 "아직 아무도 안 눌렀다"는 뜻이다.
+    if (attempt === 0) return;
+
     const controller = new AbortController();
     let timedOut = false;
     const timeout = window.setTimeout(() => {
@@ -87,7 +97,7 @@ export function ResultImageActions({ room }: { room: ResultsRoom }) {
     };
   }, []);
 
-  const retry = () => {
+  const generate = () => {
     setPrepared(null);
     setStatus("loading");
     setMessage(null);
@@ -137,13 +147,15 @@ export function ResultImageActions({ room }: { room: ResultsRoom }) {
             결과 이미지
           </h2>
           <p className="mt-1 text-sm leading-relaxed text-stone-600">
-            이미지를 저장하거나 공유하세요.
+            {status === "idle"
+              ? "1080×1080 정사각 이미지로 만들어 저장하거나 공유할 수 있어요."
+              : "이미지를 저장하거나 공유하세요."}
           </p>
         </div>
         {status === "ready" && (
           <button
             type="button"
-            onClick={retry}
+            onClick={generate}
             className="inline-flex min-h-11 flex-shrink-0 items-center gap-1.5 px-2 text-xs font-medium text-stone-600 transition-colors hover:text-stone-900"
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -153,6 +165,14 @@ export function ResultImageActions({ room }: { room: ResultsRoom }) {
       </div>
 
       <div className="aspect-square overflow-hidden rounded-2xl border border-amber-100 bg-white">
+        {status === "idle" && (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+            <ImageIcon className="h-7 w-7 text-stone-400" aria-hidden="true" />
+            <p className="text-sm leading-relaxed text-stone-600">
+              아직 이미지를 만들지 않았어요.
+            </p>
+          </div>
+        )}
         {status === "loading" && (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-stone-600" role="status">
             <Loader2 className="h-6 w-6 animate-spin text-amber-600" />
@@ -167,7 +187,7 @@ export function ResultImageActions({ room }: { room: ResultsRoom }) {
             </p>
             <button
               type="button"
-              onClick={retry}
+              onClick={generate}
               className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
             >
               <RefreshCw className="h-4 w-4" />
@@ -187,6 +207,16 @@ export function ResultImageActions({ room }: { room: ResultsRoom }) {
         )}
       </div>
 
+      {status === "idle" ? (
+        <button
+          type="button"
+          onClick={generate}
+          className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 text-sm font-semibold text-white shadow-lg shadow-amber-900/25 transition-colors hover:bg-amber-500"
+        >
+          <Sparkles className="h-4 w-4" aria-hidden="true" />
+          결과 이미지 만들기
+        </button>
+      ) : (
       <div className="mt-3 grid grid-cols-2 gap-2">
         <button
           type="button"
@@ -217,6 +247,7 @@ export function ResultImageActions({ room }: { room: ResultsRoom }) {
           공유하기
         </button>
       </div>
+      )}
 
       {message && status !== "error" && (
         <p className="mt-3 text-center text-xs leading-relaxed text-amber-800" role="status" aria-live="polite">

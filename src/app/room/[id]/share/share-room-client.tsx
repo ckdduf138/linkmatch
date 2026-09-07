@@ -5,7 +5,9 @@ import Link from "next/link";
 import { Check, Copy, ListChecks, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { AntlerLogo } from "@/components/landing/AntlerLogo";
+import { KakaoShareButton } from "@/components/share/kakao-share-button";
 import { formatEstimatedDuration } from "@/lib/format";
+import { roomShareDescription } from "@/lib/room-share-text";
 import { participantPath, participantUrl } from "@/lib/room-url";
 import type { LobbyRoom } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,12 @@ export function ShareRoomClient({ room }: { room: LobbyRoom }) {
   );
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const shareDescription = roomShareDescription({
+    expired: false,
+    isPublic: room.isPublic,
+    questionCount: room.questions.length,
+    participantCount: room.participants.length,
+  });
 
   const copyInvite = async () => {
     if (!inviteUrl) return;
@@ -109,6 +117,13 @@ export function ShareRoomClient({ room }: { room: LobbyRoom }) {
           <p className="break-all border-b border-stone-100 px-5 py-3 text-xs leading-relaxed text-stone-600">
             {inviteUrl || "참여 주소를 준비하고 있어요."}
           </p>
+          <KakaoShareButton
+            className="border-b border-stone-100 px-5 py-4"
+            roomId={room.id}
+            roomTitle={room.title}
+            description={shareDescription}
+            roomUrl={inviteUrl}
+          />
           <div className="grid grid-cols-2 divide-x divide-stone-100">
             <button
               type="button"

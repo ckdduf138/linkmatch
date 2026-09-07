@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
@@ -18,12 +18,17 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { AntlerLogo } from "@/components/landing/AntlerLogo";
 import { formatRemaining } from "@/lib/format";
+import { objectParticle } from "@/lib/korean";
+import { PUBLIC_ROOM_EXTENSION_LABEL } from "@/lib/room-lifetime";
 import { parseOptions, type ResultsRoom, type Participant, type Question } from "@/lib/types";
 import { BalanceRatioBar } from "@/components/ResultBar";
 import { GroupReport } from "@/components/room/group-report";
 import { participantUrl } from "@/lib/room-url";
 import { ResultImageActions } from "@/components/results/result-image-actions";
 import { FirstAnswerInsight, PrimaryInsight } from "@/components/results/primary-insight";
+import { ResultsOutro } from "@/components/results/results-outro";
+import { KakaoShareButton } from "@/components/share/kakao-share-button";
+import { roomShareDescription } from "@/lib/room-share-text";
 import { computeUnanimousAggregates, primaryResultInsight } from "@/lib/group-stats";
 
 
@@ -95,18 +100,21 @@ function BalanceResult({
       )}
 
       {/* Majority note */}
-      {total >= 2 && (countA !== countB) && (
-        <p className="mt-3 text-xs text-stone-600">
-          <span className="font-medium text-stone-700">
-            {countA > countB ? countA : countB}명
-          </span>
-          {" "}이{" "}
-          <span className="font-medium text-stone-700">
-            &ldquo;{countA > countB ? question.optionA : question.optionB}&rdquo;
-          </span>
-          를 선택했어요
-        </p>
-      )}
+      {total >= 2 && countA !== countB && (() => {
+        const winner = (countA > countB ? question.optionA : question.optionB) ?? "";
+        return (
+          <p className="mt-3 text-xs text-stone-600">
+            <span className="font-medium text-stone-700">
+              {countA > countB ? countA : countB}명
+            </span>
+            이{" "}
+            <span className="font-medium text-stone-700">
+              &ldquo;{winner}&rdquo;
+            </span>
+            {objectParticle(winner)} 선택했어요
+          </p>
+        );
+      })()}
       {total >= 2 && countA === countB && (
         <p className="mt-3 text-xs text-stone-600">정확히 <span className="font-medium text-stone-700">반반</span>이에요</p>
       )}
@@ -256,7 +264,27 @@ function isShareCanceled(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
-export function ResultsClient({ room }: { room: ResultsRoom }) {
+const neverChanges = () => () => {};
+const noUrl = () => "";
+
+export function ResultsClient({
+  room,
+  archived = false,
+}: {
+  room: ResultsRoom;
+  archived?: boolean;
+}) {
+  const inviteUrl = useSyncExternalStore(
+    neverChanges,
+    () => participantUrl(window.location.origin, room.id),
+    noUrl
+  );
+  const shareDescription = roomShareDescription({
+    expired: false,
+    isPublic: room.isPublic,
+    questionCount: room.questions.length,
+    participantCount: room.participants.length,
+  });
   const [copied, setCopied] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
@@ -336,7 +364,9 @@ export function ResultsClient({ room }: { room: ResultsRoom }) {
               {room.participants.length}명 참여
             </span>
             <span className="w-px h-3 bg-stone-300" />
-            <span className="font-mono">{formatRemaining(room.expiresAt)}</span>
+            <span className="font-mono">
+              {archived ? "종료된 방" : formatRemaining(room.expiresAt)}
+            </span>
             {unanimousCount > 0 && (
               <>
                 <span className="w-px h-3 bg-stone-300" />
@@ -351,7 +381,7 @@ export function ResultsClient({ room }: { room: ResultsRoom }) {
           </div>
         </motion.div>
 
-        {room.participants.length === 0 && (
+        {room.participants.length === 0 && !archived && (
           <section className="border-y border-amber-200 py-10 text-center" aria-labelledby="empty-results-heading">
             <Users className="mx-auto mb-5 h-9 w-9 text-amber-700" aria-hidden="true" />
             <h2 id="empty-results-heading" className="text-2xl font-bold text-stone-900">
@@ -359,8 +389,17 @@ export function ResultsClient({ room }: { room: ResultsRoom }) {
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-stone-600">
               첫 답변이 도착하면 비교가 시작돼요.
+              {room.isPublic &&
+                ` 한 명 답할 때마다 이 방이 ${PUBLIC_ROOM_EXTENSION_LABEL} 더 열려요.`}
             </p>
-            <div className="mx-auto mt-6 grid max-w-sm grid-cols-2 gap-2">
+            <KakaoShareButton
+              className="mx-auto mt-6 max-w-sm"
+              roomId={room.id}
+              roomTitle={room.title}
+              description={shareDescription}
+              roomUrl={inviteUrl}
+            />
+            <div className="mx-auto mt-2 grid max-w-sm grid-cols-2 gap-2">
               <button
                 onClick={copyInviteLink}
                 className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-sm font-semibold text-white shadow-lg shadow-amber-900/25 transition-colors hover:bg-amber-500"
@@ -390,7 +429,7 @@ export function ResultsClient({ room }: { room: ResultsRoom }) {
           <GroupReport room={room} primaryKind={primaryInsight?.kind ?? null} />
         )}
 
-        {room.participants.length > 0 && (
+        {room.participants.length > 0 && !archived && (
           <div className="mx-auto mt-10 max-w-lg">
             <ResultImageActions room={room} />
           </div>
@@ -445,7 +484,7 @@ export function ResultsClient({ room }: { room: ResultsRoom }) {
 
         {/* 마무리 블록 — 참여자 요약·결과 공유·초대를 하나의 흐름으로 묶는다.
             예전엔 이 셋이 거의 똑같이 생긴 흰 카드로 세 번 반복돼서 리포트 템플릿처럼 보였다. */}
-        {room.participants.length > 0 && (
+        {room.participants.length > 0 && !archived && (
           <motion.div
             initial={reduceMotion ? false : { opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -477,7 +516,11 @@ export function ResultsClient({ room }: { room: ResultsRoom }) {
 
             {/* 초대 + 새 방 */}
             <div className="px-1 py-5">
-              <p className="mb-3 text-xs text-stone-600">친구를 더 초대할까요?</p>
+              <p className="mb-3 text-xs text-stone-600">
+                {room.isPublic
+                  ? `한 명 답할 때마다 이 방이 ${PUBLIC_ROOM_EXTENSION_LABEL} 더 열려요. 지금 ${formatRemaining(room.expiresAt)}.`
+                  : "친구를 더 초대할까요?"}
+              </p>
               <div className="flex gap-2">
                 <button
                   onClick={copyInviteLink}
@@ -505,19 +548,10 @@ export function ResultsClient({ room }: { room: ResultsRoom }) {
                 </p>
               )}
             </div>
-
-            {/* 새 방 */}
-            <div className="space-y-2 px-1 py-5 text-center">
-              <p className="text-xs text-stone-600">또 다른 주제로 비교해볼까요?</p>
-              <Link
-                href="/create"
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-5 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100"
-              >
-                새 방 만들기
-              </Link>
-            </div>
           </motion.div>
         )}
+
+        <ResultsOutro isPublic={room.isPublic} />
       </div>
 
     </div>
