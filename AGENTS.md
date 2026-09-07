@@ -213,6 +213,19 @@ text-amber-400 / text-teal-400      # 흰 배경 위 텍스트로 2:1 미만 →
 
 ---
 
+## 답변 화면 자동 진행
+
+밸런스·객관식은 고르면 `AUTO_ADVANCE_MS`(380ms) 뒤 다음 질문으로 넘어간다. 예전엔
+문항마다 "선택 -> 다음" 두 번을 눌러야 해서 20문항이면 40번이었다. 지연을 두는 건
+선택이 화면에 반영되는 걸 보고 넘어가야 하기 때문이다 - 즉시 전환하면 뭘 골랐는지 모른다.
+
+- 주관식은 자동 진행하지 않는다 (`selectAnswer`를 쓰고 `selectAndAdvance`를 쓰지 않는다).
+- 마지막 문항에서는 넘어갈 곳이 없으니 예약하지 않는다. 제출 버튼이 그 자리다.
+- `prefers-reduced-motion`이면 자동 진행을 끈다. 예고 없는 화면 전환을 원하지 않는
+  사용자에게 굳이 만들지 않는다. "다음" 버튼은 언제나 그대로 동작한다.
+- 예약된 이동은 `goTo`(발굽·이전·다음)와 제출에서 반드시 취소한다. 안 그러면 직접
+  이동한 뒤에 예약분이 뒤늦게 실행돼서 화면이 혼자 튄다.
+
 ## 애니메이션 원칙
 
 Framer Motion 사용. **기능적 애니메이션만** — 장식용 bounce/infinite 남용 금지.
@@ -339,6 +352,52 @@ const room = await prisma.room.findUnique({
 
 ---
 
+## 동결 보존 (아카이브)
+
+공개방은 만료되면 지워지고 방 페이지는 전부 noindex다. 즉 사람들이 실제로 답을 채운
+콘텐츠가 통째로 증발하고 검색에 남는 게 하나도 없었다. 그래서 참여자가
+`FREEZE_MIN_PARTICIPANTS`명 이상인 공개방만 삭제 대신 얼린다 (`src/lib/room-archive.ts`).
+
+- `Room.frozenAt`이 찍히면 동결이다. `/api/cron/cleanup`이 **삭제보다 먼저** 얼린다 -
+  순서가 바뀌면 보존 대상이 그대로 지워진다. 삭제 쿼리는 `frozenAt: null`로 한정한다.
+- **비공개방은 절대 얼리지 않는다.** 닉네임이 실명일 수 있고 닫힌 그룹에만 공유된 링크다.
+  색인 가능한 영구 페이지로 만드는 건 그 전제를 깨는 짓이다.
+- 정본 URL은 `/archive/[id]` 하나다. `/room/[id]`와 `/room/[id]/results`는 동결 방이면
+  거기로 리다이렉트한다. `/room/*`이 robots.txt에서 막혀 있어서 `/room/` 밑에 두면
+  색인 자체가 안 된다 - 그래서 경로를 분리했다.
+- 화면은 `ResultsClient`에 `archived` prop을 넘겨 재사용한다. 초대·공유 버튼과 결과
+  이미지 섹션은 숨긴다 (이미지 라우트는 만료 방에 410을 준다).
+- 동결 방은 만료 시각이 지났으므로 `POST /api/rooms/[id]/answers`가 이미 410으로 막는다.
+  별도 가드를 넣지 않았다.
+
+## 인기 질문 집계 (`Question.sourceId`)
+
+"이 질문이 실제로 몇 명한테 답을 받았나"를 세려면 방의 문항이 어느 인기 질문에서
+왔는지 알아야 한다. 예전엔 방을 만들 때 문항 **텍스트만** 복사돼서 출처가 끊겼고,
+제목은 편집 가능하니 텍스트 매칭도 못 쓴다.
+
+- `Question.sourceId`에 `POPULAR_QUESTIONS`의 id를 남긴다. 사용자가 직접 쓴 질문은 null.
+- 서버는 클라이언트가 보낸 id를 그대로 믿지 않고 `POPULAR_QUESTION_IDS`에 있는지 확인한다.
+  안 그러면 조작된 값이 집계에 섞인다.
+- 인기 순위 기준은 **답변 수**로 정했다 (채택된 방 수가 아니라). 방장의 선택만 세면
+  아무도 안 답한 방이 순위를 만든다.
+- 주간 Top 10 UI는 아직 없다. 데이터가 쌓이기 전에 만들면 빈 페이지가 되고,
+  `/popular/*`는 이제 검색 진입점이라 본문이 매주 갈리면 오히려 손해다. 나중에 붙일 땐
+  기존 큐레이션 목록을 **대체하지 말고 위에 얹을 것** - 데이터가 없으면 섹션이 안 그려지게.
+
+## 공유·검색 유입
+
+- **링크 미리보기(OG)**: `src/app/room/[id]/layout.tsx`의 `generateMetadata`가 방마다 다른 제목·설명을 만들고,
+  이미지는 `/og/room/[id]`가 굽는다 (`InviteImage`, 1200x630). page.tsx가 아니라 layout에 있는 이유는
+  메타데이터가 레이아웃을 따라 내려가야 `/results`와 `/share`까지 같은 미리보기를 쓰기 때문이다.
+- OG 이미지 경로가 `/api/`나 `/room/` 밑이면 안 된다 — robots.txt에서 막혀 있어서 크롤러가 못 가져간다.
+  `robots.ts`의 allow 목록에 `/og/`가 들어 있으니 둘 중 하나만 고치지 말 것.
+- **OG에 답변 데이터를 넣지 말 것.** `getRoomShareInfo()`는 제목·질문 수·참여자 수·첫 질문만 읽는다.
+  쿠키 없는 크롤러에게 그대로 나가는 값이라 Answer Lock 바깥이다.
+- **주제 페이지**(`/popular/[topic]`)는 `src/data/question-topics.ts`가 단일 출처다. 테마(question-packs)와
+  달리 문항이 겹쳐도 된다 — 검색 의도별 랜딩이라 "탕수육 부먹 찍먹"이 술자리에도 MT에도 들어간다.
+  문항은 여기서도 id로만 참조한다. 주제를 추가하면 sitemap은 자동으로 따라온다.
+
 ## 인기 질문 · 질문 테마
 
 `popular-questions.ts`의 28문항이 유일한 출처다. 각 문항은 안정적인 `id`(예: `b-tangsuyuk`)를 갖는다.
@@ -364,7 +423,17 @@ Answer       id, questionId, participantId, value
 - `Question.type`: `"balance"` | `"multiple"` | `"subjective"`
 - `Question.options`: `JSON.stringify(string[])` — 객관식 선택지
 - `Answer.value`: balance → `"A"` | `"B"`, multiple → 인덱스 문자열, subjective → 자유 텍스트
-- 방은 생성 후 24시간 뒤 `expiresAt`. `/api/cron/cleanup`이 만료 방을 지운다.
+- 방 수명은 공개 여부로 갈린다 (`src/lib/room-lifetime.ts`가 단일 출처): 비공개 24시간, 공개 7일.
+  **공개방은 새 참여자 한 명당 하루씩 늘어나고, 생성 시각 기준 30일이 상한이다.**
+  이게 이 제품의 유일한 유포 동기다 - 공개방을 만든 사람에게 "친구한테 보낼 이유"를,
+  답하는 사람에게 기여감을 만든다. 그래서 수명 계산보다 **화면에 뜨는 문구가 본체다**
+  (로비 "지금 답하면 하루 더 열려요", 결과 "한 명 답할 때마다 하루 더 열려요, 지금 N일 남음").
+  연장 단위를 1시간처럼 잘게 잡지 말 것 - "N일 남음"이 안 움직이면 없는 기능이다.
+  연장은 `status === "created"`, 즉 **진짜 새 참여자일 때만** 한다. 재제출(recovered/replayed)로
+  수명을 계속 늘릴 수 있으면 안 된다. 상한은 중복 참여 우회로 무한정 늘리는 것도 같이 막는다.
+  공개방이 더 오래 사는 건 랜딩·`/discover`가 공개방으로 채워지기 때문이다 - 24시간마다 전부
+  사라지면 새 방문자가 빈 사이트를 본다. `/api/cron/cleanup`이 만료 방을 지우고, 같은 실행에서
+  `topUpPublicRooms()`로 공개방 수를 `PUBLIC_ROOM_FLOOR`까지 테마 방으로 채운다.
 
 ---
 
@@ -468,4 +537,6 @@ ADMIN_PASSWORD                          # 어드민 로그인
 ADMIN_SESSION_SECRET                    # (선택) 세션 서명 키, 없으면 ADMIN_PASSWORD 사용
 CRON_SECRET                             # /api/cron/cleanup Bearer 토큰
 DISCORD_WEBHOOK_URL                     # 피드백 전달
+NEXT_PUBLIC_KAKAO_JS_KEY                # (선택) 카카오 공유. 없으면 카카오 버튼이 아예 안 그려지고
+                                        # navigator.share/링크 복사 경로가 그대로 쓰인다
 ```
