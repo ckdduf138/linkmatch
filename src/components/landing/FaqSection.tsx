@@ -13,7 +13,7 @@ const FAQS = [
   },
   {
     question: "만든 방은 얼마나 유지되나요?",
-    answer: "방과 답변은 생성 후 24시간 동안 유지되고, 시간이 지나면 자동으로 삭제돼요.",
+    answer: "비공개방은 24시간, 공개방은 7일 동안 유지되고 그 뒤에는 자동으로 삭제돼요. 공개방이 더 오래 남는 건 다른 사람들이 둘러보고 답할 시간이 필요해서예요.",
   },
   {
     question: "회원가입이나 결제가 필요한가요?",
@@ -21,9 +21,27 @@ const FAQS = [
   },
 ];
 
+/**
+ * FAQPage 스키마 — 이 4개 문답이 랜딩의 유일한 본문 텍스트다.
+ * 답변 문구를 고치면 화면과 스키마가 같이 움직이도록 FAQS 하나만 본다.
+ */
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: { "@type": "Answer", text: item.answer },
+  })),
+};
+
 export function FaqSection() {
   return (
     <section className="border-t border-amber-100 bg-white px-6 py-24 md:py-28">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-16">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-stone-900">시작하기 전에</h2>

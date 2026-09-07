@@ -3,9 +3,20 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { HeroPublicRooms } from "./HeroPublicRooms";
+import { PublicRoomsFeed } from "@/components/discover/public-rooms-feed";
+import type { DiscoverRoom } from "@/lib/types";
 
-export function PublicRoomsSection() {
+export function PublicRoomsSection({
+  rooms,
+  total,
+  hasMore,
+  error,
+}: {
+  rooms: DiscoverRoom[];
+  total: number;
+  hasMore: boolean;
+  error: string | null;
+}) {
   const reduceMotion = useReducedMotion();
 
   return (
@@ -40,7 +51,14 @@ export function PublicRoomsSection() {
         </div>
 
         <div className="pt-8">
-          <HeroPublicRooms />
+          <PublicRoomsFeed
+            initialRooms={rooms}
+            initialTotal={total}
+            initialHasMore={hasMore}
+            initialSort="popular"
+            initialError={error}
+            mode="landing"
+          />
         </div>
       </motion.div>
     </section>
