@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertCircle, ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,14 @@ import { parseOptions, type LobbyRoom } from "@/lib/types";
 import { DeerHoofMark } from "@/components/DeerHoofMark";
 
 const SUBJECTIVE_MAX = 500;
+
+/**
+ * 고르면 잠깐 뒤 다음 질문으로 넘어간다.
+ *
+ * 예전엔 문항마다 "선택 -> 다음" 두 번을 눌러야 해서 20문항이면 40번이었다.
+ * 선택이 화면에 반영되는 걸 보고 넘어가야 하니 즉시가 아니라 짧은 지연을 둔다.
+ */
+const AUTO_ADVANCE_MS = 380;
 
 export interface SubmitResult {
   ok: boolean;
@@ -38,7 +46,17 @@ export function AnswerMode({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const progressRef = useRef<HTMLDivElement>(null);
+  const advanceTimer = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
+
+  const cancelAdvance = useCallback(() => {
+    if (advanceTimer.current !== null) {
+      window.clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => cancelAdvance, [cancelAdvance]);
 
   useEffect(() => {
     onAnswersChange(answers, currentQ);
@@ -67,12 +85,34 @@ export function AnswerMode({
     if (error) setError(null);
   };
 
+  const isLastQuestion = currentQ >= room.questions.length - 1;
+
+  /**
+   * 객관식·밸런스처럼 한 번 누르면 끝나는 유형만 자동으로 넘어간다.
+   * 마지막 문항에서는 넘어갈 곳이 없고(제출 버튼이 있다), 모션을 줄여달라고 한
+   * 사용자에게는 예고 없는 화면 전환을 만들지 않는다.
+   */
+  const selectAndAdvance = (value: string) => {
+    selectAnswer(value);
+    cancelAdvance();
+    if (reduceMotion || isLastQuestion) return;
+
+    advanceTimer.current = window.setTimeout(() => {
+      advanceTimer.current = null;
+      setDirection(1);
+      setCurrentQ((current) => Math.min(current + 1, room.questions.length - 1));
+    }, AUTO_ADVANCE_MS);
+  };
+
   const goTo = (index: number) => {
+    // 자동 진행 대기 중에 직접 이동하면 예약된 이동은 버린다.
+    cancelAdvance();
     setDirection(index > currentQ ? 1 : -1);
     setCurrentQ(index);
   };
 
   const handleSubmit = async () => {
+    cancelAdvance();
     if (!allAnswered || submitting) return;
     setSubmitting(true);
     setError(null);
@@ -169,7 +209,7 @@ export function AnswerMode({
                   return (
                     <motion.button
                       key={opt.value}
-                      onClick={() => selectAnswer(opt.value)}
+                      onClick={() => selectAndAdvance(opt.value)}
                       animate={reduceMotion ? undefined : { scale: isSelected ? 1.03 : 1 }}
                       whileTap={reduceMotion ? undefined : { scale: 0.97 }}
                       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
@@ -214,7 +254,7 @@ export function AnswerMode({
                 return (
                   <motion.button
                     key={i}
-                    onClick={() => selectAnswer(String(i))}
+                    onClick={() => selectAndAdvance(String(i))}
                     whileTap={{ scale: 0.99 }}
                     transition={{ duration: 0.1 }}
                     aria-pressed={isSelected}

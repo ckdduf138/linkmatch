@@ -176,6 +176,14 @@ function LiveQuestion() {
   );
 }
 
+/**
+ * 히어로 텍스트에는 등장 애니메이션을 걸지 않는다.
+ *
+ * h1이 이 페이지의 LCP 요소인데, 예전엔 framer의 initial opacity 0으로 시작해서
+ * JS가 하이드레이션되고 rAF가 돌기 전까지 아무것도 안 보였다. 실제로 탭이 백그라운드
+ * 상태로 로드되면 rAF가 멈춰서 제목이 opacity 0.4에 굳는 것까지 재현됐다.
+ * 처음 오는 사람이 읽어야 할 문장을 JS 뒤에 숨길 이유가 없다. 모션은 데모 카드만 갖는다.
+ */
 export function HeroSection() {
   const reduce = useReducedMotion();
 
@@ -188,33 +196,18 @@ export function HeroSection() {
             className="mb-4 h-12 w-11 text-amber-500 sm:h-14 sm:w-12"
           />
 
-          <motion.h1
-            initial={reduce ? false : { opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="text-4xl font-bold leading-[1.15] tracking-tight text-stone-900 sm:text-5xl lg:text-6xl"
-          >
+          <h1 className="text-4xl font-bold leading-[1.15] tracking-tight text-stone-900 sm:text-5xl lg:text-6xl">
             우리,
             <br />
             얼마나 비슷할까?
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={reduce ? false : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mt-5 max-w-md text-lg leading-relaxed text-stone-600"
-          >
+          <p className="mt-5 max-w-md text-lg leading-relaxed text-stone-600">
             질문을 만들고 링크를 보내면, 친구들이 답한 결과를 나란히 놓고 볼 수
             있어요.
-          </motion.p>
+          </p>
 
-          <motion.div
-            initial={reduce ? false : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-7"
-          >
+          <div className="mt-7">
             <Link
               href="/create"
               className="group inline-flex min-h-14 items-center gap-2 rounded-2xl bg-amber-700 px-8 text-base font-semibold text-white shadow-lg shadow-amber-900/30 transition-colors duration-200 hover:bg-amber-600"
@@ -222,7 +215,7 @@ export function HeroSection() {
               방 만들기
               <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
-          </motion.div>
+          </div>
         </div>
 
         <motion.div
