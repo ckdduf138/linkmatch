@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { AntlerLogo } from "@/components/landing/AntlerLogo";
+import { PopularNav } from "@/components/popular/popular-nav";
+import { PopularQuestionList } from "@/components/popular/question-list";
 import { POPULAR_QUESTIONS } from "@/data/popular-questions";
+import { QUESTION_TOPICS } from "@/data/question-topics";
 import { QUESTION_META } from "@/lib/question-meta";
 import type { QuestionType } from "@/lib/types";
 
@@ -60,24 +63,10 @@ export default function PopularPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
       />
 
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-5 bg-[#fafaf8]/80 backdrop-blur-md border-b border-amber-100/50">
-        <Link
-          href="/"
-          className="flex min-h-11 items-center gap-2 text-sm font-semibold text-stone-900 tracking-tight"
-        >
-          <AntlerLogo className="w-3.5 h-[18px] text-amber-500" />
-          Deerlink
-        </Link>
-        <Link
-          href="/create"
-          className="flex min-h-11 items-center px-2 text-sm text-stone-600 hover:text-stone-900 transition-colors"
-        >
-          방 만들기 &rarr;
-        </Link>
-      </nav>
+      <PopularNav />
 
       <main className="max-w-3xl mx-auto px-6 pt-32 pb-24">
-        <header className="mb-16">
+        <header className="mb-14">
           <h1 className="text-4xl md:text-5xl font-bold text-stone-900 tracking-tight leading-[1.1] mb-6">
             단톡방에서 바로 쓰는
             <br />
@@ -93,9 +82,41 @@ export default function PopularPage() {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium transition-all duration-200 shadow-lg shadow-amber-900/30 hover:-translate-y-0.5"
           >
             방 만들기 시작
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </Link>
         </header>
+
+        <section aria-labelledby="topics-heading" className="border-y border-amber-100 py-10">
+          <h2
+            id="topics-heading"
+            className="text-2xl md:text-3xl font-bold tracking-tight text-stone-900"
+          >
+            어떤 자리에서 쓸 건가요?
+          </h2>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-stone-600">
+            자리에 맞게 골라둔 묶음이에요. 하나를 고르면 그 주제 질문만 모아서 보고, 바로
+            방까지 만들 수 있어요.
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {QUESTION_TOPICS.map((topic) => (
+              <Link
+                key={topic.slug}
+                href={`/popular/${topic.slug}`}
+                className="group rounded-2xl border border-amber-100 bg-white p-5 transition-colors hover:border-amber-300 hover:bg-amber-50/40"
+              >
+                <p className="text-base font-bold text-stone-900">{topic.label}</p>
+                <p className="mt-1 text-xs leading-relaxed text-stone-600">{topic.tagline}</p>
+                <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-amber-800">
+                  질문 {topic.questionIds.length}개 보기
+                  <ArrowRight
+                    className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <Section
           type="balance"
@@ -103,30 +124,7 @@ export default function PopularPage() {
           title="둘 중 하나만 골라야 한다면?"
           description="가치관, 취향, 인간관계까지, 양자택일로 친구들의 진짜 생각을 확인하는 질문들이에요. 단톡방, MT, 커플 데이트에서 가장 많이 쓰는 유형."
         >
-          <ol className="space-y-4">
-            {balance.map((q, i) => (
-              <li
-                key={q.title}
-                className="rounded-2xl border border-amber-100 bg-white p-5"
-              >
-                <div className="text-xs font-mono text-amber-600 mb-2 tabular-nums">
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <h3 className="text-base font-semibold text-stone-900 leading-snug mb-3">
-                  {q.title}
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="py-2 px-3 rounded-lg border border-amber-100 bg-amber-50 text-xs font-medium text-amber-700 text-center">
-                    {q.optionA}
-                  </div>
-                  <div className="py-2 px-3 rounded-lg border border-stone-200 bg-stone-50 text-xs font-medium text-stone-600 text-center">
-                    {q.optionB}
-                  </div>
-                </div>
-                <QuestionStartLink questionId={q.id} />
-              </li>
-            ))}
-          </ol>
+          <PopularQuestionList questions={balance} />
         </Section>
 
         <Section
@@ -135,33 +133,7 @@ export default function PopularPage() {
           title="여러 선택지 중에 가장 가까운 건?"
           description="간단한 객관식 질문으로 그룹 내 성향을 빠르게 비교. 가치관 테스트, 팀 빌딩, 아이스브레이킹에 잘 맞아요."
         >
-          <ol className="space-y-4">
-            {multiple.map((q, i) => (
-              <li
-                key={q.title}
-                className="rounded-2xl border border-teal-100 bg-white p-5"
-              >
-                <div className="text-xs font-mono text-teal-600 mb-2 tabular-nums">
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <h3 className="text-base font-semibold text-stone-900 leading-snug mb-3">
-                  {q.title}
-                </h3>
-                <ul className="space-y-1.5">
-                  {q.options?.map((opt, oi) => (
-                    <li
-                      key={oi}
-                      className="flex items-center gap-2 text-xs text-stone-600"
-                    >
-                      <span className="w-1 h-1 rounded-full bg-teal-400 flex-shrink-0" />
-                      {opt}
-                    </li>
-                  ))}
-                </ul>
-                <QuestionStartLink questionId={q.id} />
-              </li>
-            ))}
-          </ol>
+          <PopularQuestionList questions={multiple} />
         </Section>
 
         <Section
@@ -170,22 +142,7 @@ export default function PopularPage() {
           title="자유롭게 답하는 질문들"
           description="형식 없는 짧은 답변으로 의외의 진심을 모으는 질문. 모임의 마지막에 던지면 분위기가 깊어져요."
         >
-          <ol className="space-y-4">
-            {subjective.map((q, i) => (
-              <li
-                key={q.title}
-                className="rounded-2xl border border-stone-200 bg-white p-5"
-              >
-                <div className="text-xs font-mono text-stone-600 mb-2 tabular-nums">
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <h3 className="text-base font-semibold text-stone-900 leading-snug">
-                  {q.title}
-                </h3>
-                <QuestionStartLink questionId={q.id} />
-              </li>
-            ))}
-          </ol>
+          <PopularQuestionList questions={subjective} />
         </Section>
 
         <section className="mt-20 rounded-3xl bg-amber-50 border border-amber-100 px-8 py-14 text-center">
@@ -202,7 +159,7 @@ export default function PopularPage() {
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium transition-all duration-200 shadow-lg shadow-amber-900/40 hover:-translate-y-0.5"
           >
             지금 방 만들기
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </Link>
         </section>
 
@@ -211,18 +168,6 @@ export default function PopularPage() {
         </footer>
       </main>
     </div>
-  );
-}
-
-function QuestionStartLink({ questionId }: { questionId: string }) {
-  return (
-    <Link
-      href={`/create?question=${encodeURIComponent(questionId)}`}
-      className="mt-4 flex min-h-11 items-center justify-end gap-1.5 border-t border-amber-100 pt-3 text-sm font-semibold text-amber-800 transition-colors hover:text-amber-950"
-    >
-      이 질문으로 시작
-      <ArrowRight className="h-4 w-4" aria-hidden="true" />
-    </Link>
   );
 }
 
@@ -245,7 +190,7 @@ function Section({
     <section className="mt-16">
       <div className="mb-8">
         <h2 className="flex items-center gap-2.5 text-2xl md:text-3xl font-bold text-stone-900 tracking-tight mb-3">
-          <Icon className={`h-5 w-5 flex-shrink-0 ${meta.accent}`} />
+          <Icon className={`h-5 w-5 flex-shrink-0 ${meta.accent}`} aria-hidden="true" />
           {title}
         </h2>
         <p className="text-sm text-stone-600 leading-relaxed max-w-xl">

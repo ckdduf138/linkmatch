@@ -10,11 +10,21 @@ import {
   subscribeDrafts,
   type CreateDraft,
 } from "@/lib/draft-storage";
-import { packQuestions, type QuestionPack } from "@/data/question-packs";
+import { packQuestions, QUESTION_PACKS, type QuestionPack } from "@/data/question-packs";
 import { POPULAR_QUESTIONS } from "@/data/popular-questions";
 
-export function CreatePageClient({ initialQuestionId }: { initialQuestionId: string | null }) {
-  const [pack, setPack] = useState<QuestionPack | null>(null);
+export function CreatePageClient({
+  initialQuestionId,
+  initialPackId,
+}: {
+  initialQuestionId: string | null;
+  initialPackId: string | null;
+}) {
+  // /popular/[topic] 의 "이 테마로 방 만들기"가 여기로 들어온다. URL로 지정된 테마는
+  // 사용자가 방금 고른 것과 똑같이 취급한다 — 저장된 초안보다 우선한다.
+  const [pack, setPack] = useState<QuestionPack | null>(
+    () => QUESTION_PACKS.find((candidate) => candidate.id === initialPackId) ?? null
+  );
   const [skipped, setSkipped] = useState(false);
   const [useInitialQuestion, setUseInitialQuestion] = useState(Boolean(initialQuestionId));
   const [, forceReset] = useState(0);
