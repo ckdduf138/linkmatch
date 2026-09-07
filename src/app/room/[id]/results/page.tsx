@@ -1,9 +1,9 @@
-import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { canViewResults, participantCookieName } from "@/lib/participant-session";
 import { archivePath } from "@/lib/room-archive";
+import { getRoomBundle } from "@/lib/room-query";
 import { serializeResultsRoom } from "@/lib/serialize";
 import { AntlerLogo } from "@/components/landing/AntlerLogo";
 import { ResultsClient } from "./results-client";
@@ -15,16 +15,7 @@ export default async function ResultsPage({
 }) {
   const { id } = await params;
 
-  const room = await prisma.room.findUnique({
-    where: { id },
-    include: {
-      questions: { orderBy: { order: "asc" } },
-      participants: {
-        include: { answers: true },
-        orderBy: { createdAt: "asc" },
-      },
-    },
-  });
+  const room = await getRoomBundle(id);
 
   if (!room) notFound();
 

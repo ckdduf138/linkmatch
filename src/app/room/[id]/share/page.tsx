@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AntlerLogo } from "@/components/landing/AntlerLogo";
-import { prisma } from "@/lib/prisma";
+import { getRoomBundle } from "@/lib/room-query";
 import { serializeLobbyRoom } from "@/lib/serialize";
 import { ShareRoomClient } from "./share-room-client";
 
@@ -11,13 +11,7 @@ export default async function ShareRoomPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const room = await prisma.room.findUnique({
-    where: { id },
-    include: {
-      questions: { orderBy: { order: "asc" } },
-      participants: { orderBy: { createdAt: "asc" } },
-    },
-  });
+  const room = await getRoomBundle(id);
 
   if (!room) notFound();
 

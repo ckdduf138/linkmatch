@@ -6,6 +6,7 @@ import {
 } from "@/lib/participant-session";
 import { checkRateLimit, clientKey } from "@/lib/rate-limit";
 import { extendedPublicExpiry } from "@/lib/room-lifetime";
+import { getSubmissionContext } from "@/lib/room-query";
 import { DISCOVER_CACHE_TAG } from "@/lib/discover-rooms";
 import { parseOptions } from "@/lib/types";
 import { revalidateTag } from "next/cache";
@@ -155,21 +156,25 @@ export async function POST(
     return NextResponse.json({ error: "답변 형식을 확인해주세요" }, { status: 400 });
   }
 
-  const roomQueryStartedAt = performance.now();
-  const room = await prisma.room.findUnique({
-    where: { id: roomId },
-    include: {
-      questions: {
-        select: { id: true, type: true, options: true },
-        orderBy: { order: "asc" },
-      },
-    },
-  });
-  dbDurationMs += performance.now() - roomQueryStartedAt;
+  const cookieParticipantId = request.cookies.get(participantCookieName(roomId))?.value;
+  const deterministicParticipantId = participantIdFor(roomId, submissionId);
+  const candidateIds = [cookieParticipantId, deterministicParticipantId].filter(
+    (candidate): candidate is string => typeof candidate === "string"
+  );
 
-  if (!room) {
+  // 방·문항과 "이 사람이 이미 참여자인가"를 한 왕복에 읽는다. 예전엔 조회 두 개였고,
+  // libSQL은 요청을 직렬화하니 그게 곧 왕복 두 번이었다.
+  const contextStartedAt = performance.now();
+  const context = await getSubmissionContext(roomId, candidateIds);
+  dbDurationMs += performance.now() - contextStartedAt;
+
+  if (!context) {
     return NextResponse.json({ error: "방을 찾을 수 없습니다" }, { status: 404 });
   }
+
+  const room = context.room;
+  const existingParticipant = context.participant;
+
   if (new Date(room.expiresAt) < new Date()) {
     return NextResponse.json({ error: "만료된 방이에요" }, { status: 410 });
   }
@@ -195,29 +200,19 @@ export async function POST(
     return NextResponse.json({ error: "답변 내용을 확인해주세요" }, { status: 400 });
   }
 
-  const cookieParticipantId = request.cookies.get(participantCookieName(roomId))?.value;
-  const deterministicParticipantId = participantIdFor(roomId, submissionId);
-  const candidateIds = [cookieParticipantId, deterministicParticipantId].filter(
-    (candidate): candidate is string => typeof candidate === "string"
-  );
-
-  const existingQueryStartedAt = performance.now();
-  const existingParticipant = await prisma.participant.findFirst({
-    where: { roomId, id: { in: candidateIds } },
-    include: { answers: { select: { questionId: true } } },
-  });
-  dbDurationMs += performance.now() - existingQueryStartedAt;
-
-  const existingQuestionIds = new Set(
-    existingParticipant?.answers.map((answer) => answer.questionId) ?? []
-  );
+  const existingQuestionIds = new Set(existingParticipant?.answeredQuestionIds ?? []);
   const hasCompletedExistingSubmission = room.questions.every((question) =>
     existingQuestionIds.has(question.id)
   );
 
   if (existingParticipant && hasCompletedExistingSubmission) {
     return participantResponse({
-      participant: existingParticipant,
+      participant: {
+        id: existingParticipant.id,
+        roomId: existingParticipant.roomId,
+        nickname: existingParticipant.nickname,
+        createdAt: existingParticipant.createdAt,
+      },
       roomId,
       status: "replayed",
       startedAt,

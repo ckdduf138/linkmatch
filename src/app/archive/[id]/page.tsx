@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { archivePath } from "@/lib/room-archive";
+import { getRoomBundle } from "@/lib/room-query";
 import { getRoomShareInfo, roomShareDescription } from "@/lib/room-share";
 import { serializeResultsRoom } from "@/lib/serialize";
 import { ResultsClient } from "@/app/room/[id]/results/results-client";
@@ -16,13 +16,8 @@ import { ResultsClient } from "@/app/room/[id]/results/results-client";
 export const revalidate = 86400;
 
 async function findFrozenRoom(id: string) {
-  return prisma.room.findFirst({
-    where: { id, frozenAt: { not: null } },
-    include: {
-      questions: { orderBy: { order: "asc" } },
-      participants: { include: { answers: true }, orderBy: { createdAt: "asc" } },
-    },
-  });
+  const room = await getRoomBundle(id);
+  return room?.frozenAt ? room : null;
 }
 
 export async function generateMetadata({

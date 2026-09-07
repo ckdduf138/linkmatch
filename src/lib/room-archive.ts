@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
 import type { ArchivedRoom, DiscoverPreviewQuestion, QuestionType } from "./types";
 
@@ -55,9 +56,16 @@ export async function freezeExpiredPublicRooms(): Promise<number> {
   return result.count;
 }
 
-export async function countArchivedRooms(): Promise<number> {
-  return prisma.room.count({ where: { frozenAt: { not: null } } });
-}
+/**
+ * 방을 얼리는 건 하루 한 번 도는 cron뿐이라 이 숫자는 거의 안 변한다. /discover가
+ * 목록 조회 뒤에 이걸 또 기다리면 왕복이 통째로 한 번 더 붙는데(libSQL은 요청을
+ * 직렬화해서 Promise.all로도 못 겹친다), 그 값을 위해 낼 비용이 아니다.
+ */
+export const countArchivedRooms = unstable_cache(
+  async (): Promise<number> => prisma.room.count({ where: { frozenAt: { not: null } } }),
+  ["archived-room-count-v1"],
+  { revalidate: 3600 }
+);
 
 export async function getArchivedRooms({
   limit = 50,
