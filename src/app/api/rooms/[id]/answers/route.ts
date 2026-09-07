@@ -5,6 +5,7 @@ import {
   participantCookieName,
 } from "@/lib/participant-session";
 import { checkRateLimit, clientKey } from "@/lib/rate-limit";
+import { extendedPublicExpiry } from "@/lib/room-lifetime";
 import { DISCOVER_CACHE_TAG } from "@/lib/discover-rooms";
 import { parseOptions } from "@/lib/types";
 import { revalidateTag } from "next/cache";
@@ -272,10 +273,18 @@ export async function POST(
       })),
     });
 
-    return {
-      participant: upsertedParticipant,
-      status: existingAnswerCount > 0 ? ("recovered" as const) : ("created" as const),
-    };
+    const status = existingAnswerCount > 0 ? ("recovered" as const) : ("created" as const);
+
+    // 진짜 새 참여자일 때만 연장한다. recovered/replayed는 이미 세어진 사람이라
+    // 재제출로 수명을 계속 늘릴 수 있으면 안 된다.
+    if (room.isPublic && status === "created") {
+      const extended = extendedPublicExpiry(room);
+      if (extended) {
+        await tx.room.update({ where: { id: roomId }, data: { expiresAt: extended } });
+      }
+    }
+
+    return { participant: upsertedParticipant, status };
   });
   dbDurationMs += performance.now() - writeStartedAt;
 

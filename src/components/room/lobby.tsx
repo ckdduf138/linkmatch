@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowRight, Clock3, Globe, ListChecks, Lock, Users } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { formatEstimatedDuration, formatRemaining } from "@/lib/format";
+import { PUBLIC_ROOM_EXTENSION_LABEL } from "@/lib/room-lifetime";
 import type { LobbyRoom } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -74,6 +75,12 @@ export function Lobby({
               ? "닉네임 없이 참여하며, 결과에는 개인 신원이 표시되지 않아요."
               : "내 답을 끝내기 전에는 다른 사람의 선택을 볼 수 없어요."}
           </p>
+          {room.isPublic && (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900">
+              <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+              지금 답하면 이 방이 {PUBLIC_ROOM_EXTENSION_LABEL} 더 열려요
+            </p>
+          )}
         </div>
 
         {room.participants.length > 0 && (

@@ -3,6 +3,7 @@
 import { motion, AnimatePresence, useMotionValue, PanInfo } from "framer-motion";
 import { AlertCircle, ArrowRight, Clock3, Globe, Loader2, Lock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { roomLifetimeLabel } from "@/lib/room-lifetime";
 import { useAccessibleDialog } from "@/lib/use-accessible-dialog";
 
 interface PublishModalProps {
@@ -135,7 +136,9 @@ export function PublishModal({
               <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-amber-900">
                 <Clock3 className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                 <p className="text-xs leading-relaxed">
-                  방과 답변은 생성 후 24시간 동안 유지돼요. 시간이 지나면 자동으로 삭제됩니다.
+                  {isPublic
+                    ? `공개방과 답변은 생성 후 ${roomLifetimeLabel(true)} 동안 유지돼요. 다른 사람들이 둘러보고 답할 시간이 필요해서 비공개방보다 오래 남아요.`
+                    : `방과 답변은 생성 후 ${roomLifetimeLabel(false)} 동안 유지돼요. 시간이 지나면 자동으로 삭제됩니다.`}
                 </p>
               </div>
 
