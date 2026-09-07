@@ -188,3 +188,12 @@ export const POPULAR_QUESTIONS: PopularQuestion[] = [
     title: "이 그룹이랑 같이 가고 싶은 여행지 한 곳만 말해봐",
   },
 ];
+
+/**
+ * 방을 만들 때 "이 문항이 인기 질문에서 온 것인지" 판별하는 데 쓴다.
+ * 서버가 클라이언트의 id를 그대로 믿지 않고 이 집합으로 걸러야, 사용자가 직접 쓴
+ * 질문이나 조작된 값이 통계에 섞이지 않는다.
+ */
+export const POPULAR_QUESTION_IDS: ReadonlySet<string> = new Set(
+  POPULAR_QUESTIONS.map((question) => question.id)
+);

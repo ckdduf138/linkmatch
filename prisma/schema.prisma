@@ -13,12 +13,15 @@ model Room {
   isPublic  Boolean  @default(false)
   createdAt DateTime @default(now())
   expiresAt DateTime
+  // 동결 보존된 공개방. 만료돼도 지우지 않고 읽기 전용 아카이브로 남긴다.
+  frozenAt  DateTime?
 
   questions Question[]
   participants Participant[]
 
   @@index([isPublic, expiresAt])
   @@index([isPublic, createdAt])
+  @@index([frozenAt])
 }
 
 model Question {
@@ -30,11 +33,15 @@ model Question {
   optionB  String? // balance game option B
   options  String? // JSON array for multiple choice options
   order    Int
+  // POPULAR_QUESTIONS의 id. 방을 만들 때 문항 텍스트만 복사되면 "이 질문이 실제로
+  // 몇 명한테 답을 받았나"를 영영 계산할 수 없다. 사용자가 직접 쓴 질문은 null.
+  sourceId String?
 
   room    Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   answers Answer[]
 
   @@index([roomId])
+  @@index([sourceId])
 }
 
 model Participant {

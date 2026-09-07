@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { hasCompletedAnswers, participantCookieName } from "@/lib/participant-session";
+import { archivePath } from "@/lib/room-archive";
 import { serializeLobbyRoom } from "@/lib/serialize";
 import { AntlerLogo } from "@/components/landing/AntlerLogo";
 import { RoomClient } from "./room-client";
@@ -27,6 +28,9 @@ export default async function RoomPage({
 
   if (!room) notFound();
 
+  // 동결 보존된 방은 읽기 전용 아카이브가 정본이다. 중복 URL을 만들지 않는다.
+  if (room.frozenAt) redirect(archivePath(id));
+
   // 이미 참여한 사람은 결과 페이지로
   const cookieStore = await cookies();
   const participantId = cookieStore.get(participantCookieName(id))?.value;
@@ -44,7 +48,7 @@ export default async function RoomPage({
             방이 만료됐어요
           </h1>
           <p className="text-sm text-stone-500">
-            24시간이 지나 더 이상 접근할 수 없어요
+            보관 기간이 지나 더 이상 접근할 수 없어요
           </p>
         </div>
         <Link

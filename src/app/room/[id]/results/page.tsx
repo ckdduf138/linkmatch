@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { canViewResults, participantCookieName } from "@/lib/participant-session";
+import { archivePath } from "@/lib/room-archive";
 import { serializeResultsRoom } from "@/lib/serialize";
 import { AntlerLogo } from "@/components/landing/AntlerLogo";
 import { ResultsClient } from "./results-client";
@@ -26,6 +27,8 @@ export default async function ResultsPage({
   });
 
   if (!room) notFound();
+
+  if (room.frozenAt) redirect(archivePath(id));
 
   // 모든 질문에 답변한 참여자만 결과 열람 가능 — 단, 공개방은 링크를 아는
   // 아무나 결과를 볼 수 있는 게 의도된 동작이라 이 게이트를 건너뛴다.
@@ -68,7 +71,7 @@ export default async function ResultsPage({
             방이 만료됐어요
           </h1>
           <p className="text-sm text-stone-500">
-            24시간이 지나 더 이상 접근할 수 없어요
+            보관 기간이 지나 더 이상 접근할 수 없어요
           </p>
         </div>
         <Link

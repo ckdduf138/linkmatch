@@ -30,6 +30,8 @@ interface RoomBase {
   title: string;
   isPublic: boolean;
   expiresAt: string;
+  /** 동결 보존된 방이면 그 시각. 읽기 전용 아카이브라 초대·공유 동선을 숨긴다. */
+  frozenAt: string | null;
   questions: Question[];
 }
 
@@ -68,6 +70,19 @@ export interface DiscoverRoom {
   participantCount: number;
   createdAt: string;
   expiresAt: string;
+  previewQuestion: DiscoverPreviewQuestion | null;
+}
+
+/**
+ * 동결 보존된 방 카드. 끝난 방이라 남은 시간이 없고, 대신 동결 시각을 보여준다.
+ * 공개방만 동결되므로 닉네임은 담지 않는다 (공개방은 익명이다).
+ */
+export interface ArchivedRoom {
+  id: string;
+  title: string;
+  questionCount: number;
+  participantCount: number;
+  frozenAt: string;
   previewQuestion: DiscoverPreviewQuestion | null;
 }
 

@@ -27,7 +27,7 @@ export default async function ShareRoomPage({
         <AntlerLogo className="h-12 w-10 text-stone-300" />
         <div className="text-center">
           <h1 className="mb-2 text-xl font-bold text-stone-900">방이 만료됐어요</h1>
-          <p className="text-sm text-stone-600">24시간이 지나 초대 링크를 쓸 수 없어요.</p>
+          <p className="text-sm text-stone-600">보관 기간이 지나 초대 링크를 쓸 수 없어요.</p>
         </div>
         <Link
           href="/create"

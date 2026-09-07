@@ -1,5 +1,7 @@
+import { POPULAR_QUESTION_IDS } from "@/data/popular-questions";
 import { prisma } from "@/lib/prisma";
 import { DISCOVER_CACHE_TAG } from "@/lib/discover-rooms";
+import { roomExpiresAt } from "@/lib/room-lifetime";
 import { checkRateLimit, clientKey } from "@/lib/rate-limit";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
@@ -20,6 +22,8 @@ interface QuestionInput {
   optionA?: string;
   optionB?: string;
   options?: string[];
+  /** 클라이언트가 보내는 드래프트 id. 인기 질문에서 온 것만 sourceId로 남는다. */
+  id?: string;
 }
 
 function validQuestion(q: unknown): q is QuestionInput {
@@ -76,12 +80,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "공개 설정을 확인해주세요" }, { status: 400 });
   }
 
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const publicRoom = isPublic === true;
+  const expiresAt = roomExpiresAt(publicRoom);
 
   const room = await prisma.room.create({
     data: {
       title: title.trim(),
-      isPublic: isPublic === true,
+      isPublic: publicRoom,
       expiresAt,
       questions: {
         create: (questions as QuestionInput[]).map((q, i) => ({
@@ -91,6 +96,9 @@ export async function POST(request: Request) {
           optionB: q.optionB?.trim(),
           options: q.options ? JSON.stringify(q.options.map((o) => o.trim())) : null,
           order: i,
+          // 클라이언트 id를 그대로 믿지 않는다. 인기 질문 목록에 실제로 있는 id만 남겨야
+          // 사용자가 직접 쓴 질문이나 조작된 값이 "인기 질문" 집계에 섞이지 않는다.
+          sourceId: typeof q.id === "string" && POPULAR_QUESTION_IDS.has(q.id) ? q.id : null,
         })),
       },
     },

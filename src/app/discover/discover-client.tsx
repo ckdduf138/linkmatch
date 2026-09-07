@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { AntlerLogo } from "@/components/landing/AntlerLogo";
 import { PublicRoomsFeed } from "@/components/discover/public-rooms-feed";
@@ -11,11 +11,13 @@ export function DiscoverClient({
   initialTotal,
   initialHasMore,
   initialError,
+  archivedCount,
 }: {
   initialRooms: DiscoverRoom[];
   initialTotal: number;
   initialHasMore: boolean;
   initialError: string | null;
+  archivedCount: number;
 }) {
   return (
     <div className="min-h-screen bg-[#fafaf8] text-stone-900">
@@ -50,6 +52,21 @@ export function DiscoverClient({
           initialSort="recent"
           initialError={initialError}
         />
+
+        {archivedCount > 0 && (
+          <Link
+            href="/archive"
+            className="group mt-10 flex min-h-12 items-center justify-between gap-3 rounded-2xl border border-amber-100 bg-white px-5 text-sm text-stone-700 transition-colors hover:border-amber-300 hover:text-stone-900"
+          >
+            <span>
+              끝난 방 결과도 {archivedCount}개 남아 있어요
+            </span>
+            <ArrowRight
+              className="h-4 w-4 flex-shrink-0 text-amber-800 transition-transform duration-200 group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -41,6 +41,7 @@ interface DbRoom {
   title: string;
   isPublic: boolean;
   expiresAt: Date;
+  frozenAt: Date | null;
   questions: DbQuestion[];
 }
 
@@ -82,6 +83,7 @@ export function serializeLobbyRoom(
     title: room.title,
     isPublic: room.isPublic,
     expiresAt: room.expiresAt.toISOString(),
+    frozenAt: room.frozenAt?.toISOString() ?? null,
     questions: room.questions.map(serializeQuestion),
     participants: room.participants.map(serializeSummary),
   };
@@ -95,6 +97,7 @@ export function serializeResultsRoom(
     title: room.title,
     isPublic: room.isPublic,
     expiresAt: room.expiresAt.toISOString(),
+    frozenAt: room.frozenAt?.toISOString() ?? null,
     questions: room.questions.map(serializeQuestion),
     participants: room.participants.map(serializeParticipant),
   };
